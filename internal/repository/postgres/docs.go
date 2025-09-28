@@ -48,7 +48,7 @@ func (r *documentRepository) GetDocumentByID(ctx context.Context, id string) (*d
 	return &doc, nil
 }
 
-func (r *documentRepository) GetUserDocuments(ctx context.Context, login string, limit int) ([]domain.Document, error) {
+func (r *documentRepository) GetUserDocuments(ctx context.Context, ownerID string, limit int) ([]domain.Document, error) {
 	sql := `
 	select id, name, mime, file, public, created, grant_list
 	from documents
@@ -56,7 +56,7 @@ func (r *documentRepository) GetUserDocuments(ctx context.Context, login string,
 	order by name, created limit $2
 	`
 
-	rows, err := r.pool.Query(ctx, sql, login, limit)
+	rows, err := r.pool.Query(ctx, sql, ownerID, limit)
 	if err != nil {
 		return nil, err
 	}
