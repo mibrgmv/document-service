@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/mibrgmv/document-service/internal/domain"
@@ -14,7 +13,7 @@ import (
 type DocumentService interface {
 	UploadDocument(ctx context.Context, meta *domain.DocumentMeta, data []byte, jsonData, owner string) (*domain.Document, error)
 	GetDocuments(ctx context.Context, login, filterKey, filterValue string, limit int) ([]domain.Document, error)
-	GetDocument(ctx context.Context, id, login string) (*domain.Document, error)
+	GetDocument(ctx context.Context, docID, userID, login string) (*domain.Document, error)
 	DeleteDocument(ctx context.Context, id, owner string) error
 	FilterDocuments(docs []domain.Document, key, value string) []domain.Document
 }
@@ -22,27 +21,19 @@ type DocumentService interface {
 type documentService struct {
 	docRepo   repository.DocumentRepository
 	cacheRepo repository.CacheRepository
-	userRepo  repository.UserRepository
 }
 
 func NewDocumentService(
 	docRepo repository.DocumentRepository,
 	cacheRepo repository.CacheRepository,
-	userRepo repository.UserRepository,
 ) DocumentService {
 	return &documentService{
 		docRepo:   docRepo,
 		cacheRepo: cacheRepo,
-		userRepo:  userRepo,
 	}
 }
 
 func (s *documentService) UploadDocument(ctx context.Context, meta *domain.DocumentMeta, data []byte, jsonData, owner string) (*domain.Document, error) {
-	user, err := s.userRepo.GetUserByLogin(ctx, owner)
-	if err != nil {
-		return nil, fmt.Errorf("user not found: %w", err)
-	}
-
 	doc := &domain.Document{
 		ID:      utils.GenerateID(),
 		Name:    meta.Name,
@@ -51,7 +42,7 @@ func (s *documentService) UploadDocument(ctx context.Context, meta *domain.Docum
 		Public:  meta.Public,
 		Created: time.Now(),
 		Grant:   meta.Grant,
-		Owner:   user.ID,
+		Owner:   owner,
 	}
 
 	if meta.File {
@@ -60,7 +51,7 @@ func (s *documentService) UploadDocument(ctx context.Context, meta *domain.Docum
 		doc.JSON = jsonData
 	}
 
-	err = s.docRepo.CreateDocument(ctx, doc)
+	err := s.docRepo.CreateDocument(ctx, doc)
 	if err != nil {
 		return nil, err
 	}
@@ -69,19 +60,14 @@ func (s *documentService) UploadDocument(ctx context.Context, meta *domain.Docum
 	return doc, nil
 }
 
-func (s *documentService) GetDocuments(ctx context.Context, login, filterKey, filterValue string, limit int) ([]domain.Document, error) {
-	cacheKey := "docs:" + login + ":" + filterKey + ":" + filterValue
+func (s *documentService) GetDocuments(ctx context.Context, userID, filterKey, filterValue string, limit int) ([]domain.Document, error) {
+	cacheKey := "docs:" + userID + ":" + filterKey + ":" + filterValue
 
 	if cached, err := s.cacheRepo.GetDocuments(ctx, cacheKey); cached != nil && err == nil {
 		return cached, nil
 	}
 
-	user, err := s.userRepo.GetUserByLogin(ctx, login)
-	if err != nil {
-		return nil, fmt.Errorf("user not found: %w", err)
-	}
-
-	docs, err := s.docRepo.GetUserDocuments(ctx, user.ID, limit)
+	docs, err := s.docRepo.GetUserDocuments(ctx, userID, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -94,24 +80,19 @@ func (s *documentService) GetDocuments(ctx context.Context, login, filterKey, fi
 	return docs, nil
 }
 
-func (s *documentService) GetDocument(ctx context.Context, id, login string) (*domain.Document, error) {
-	cacheKey := "doc:" + id + ":" + login
+func (s *documentService) GetDocument(ctx context.Context, docID, userID, login string) (*domain.Document, error) {
+	cacheKey := "doc:" + docID + ":" + userID
 
 	if cached, err := s.cacheRepo.GetDocument(ctx, cacheKey); err == nil {
 		return cached, nil
 	}
 
-	doc, err := s.docRepo.GetDocumentByID(ctx, id)
+	doc, err := s.docRepo.GetDocumentByID(ctx, docID)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := s.userRepo.GetUserByLogin(ctx, login)
-	if err != nil {
-		return nil, fmt.Errorf("user not found: %w", err)
-	}
-
-	if doc.Owner != user.ID && !doc.Public && !contains(doc.Grant, login) {
+	if doc.Owner != userID && !doc.Public && !contains(doc.Grant, login) {
 		return nil, errors.New("access denied")
 	}
 

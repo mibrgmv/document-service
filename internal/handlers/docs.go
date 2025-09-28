@@ -35,7 +35,7 @@ func NewDocumentHandler(docService service.DocumentService) *DocumentHandler {
 // @Failure 500 {object} Response
 // @Router /docs [post]
 func (h *DocumentHandler) UploadDocument(c *gin.Context) {
-	login := c.MustGet("login").(string)
+	userID := c.MustGet("user_id").(string)
 
 	metaStr := c.PostForm("meta")
 	var meta DocumentMeta
@@ -69,7 +69,7 @@ func (h *DocumentHandler) UploadDocument(c *gin.Context) {
 
 	jsonData := c.PostForm("json")
 
-	doc, err := h.docService.UploadDocument(c.Request.Context(), meta.ToDomain(), fileData, jsonData, login)
+	doc, err := h.docService.UploadDocument(c.Request.Context(), meta.ToDomain(), fileData, jsonData, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Response{
 			Error: &Error{Code: 500, Text: err.Error()},
@@ -95,7 +95,7 @@ func (h *DocumentHandler) UploadDocument(c *gin.Context) {
 // @Tags documents
 // @Security BearerAuth
 // @Produce json
-// @Param login query string false "User login to filter (default: current user)"
+// @Param user_id query string false "User ID to filter (default: current user)"
 // @Param key query string false "Filter key (name, mime, public)"
 // @Param value query string false "Filter value"
 // @Param limit query integer false "Limit number of documents"
@@ -105,17 +105,17 @@ func (h *DocumentHandler) UploadDocument(c *gin.Context) {
 // @Failure 500 {object} Response
 // @Router /docs [get]
 func (h *DocumentHandler) GetDocuments(c *gin.Context) {
-	login := c.MustGet("login").(string)
-	targetLogin := c.Query("login")
-	if targetLogin == "" {
-		targetLogin = login
+	userID := c.MustGet("user_id").(string)
+	targetID := c.Query("user_id")
+	if targetID == "" {
+		targetID = userID
 	}
 
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "100"))
 	filterKey := c.Query("key")
 	filterValue := c.Query("value")
 
-	docs, err := h.docService.GetDocuments(c.Request.Context(), targetLogin, filterKey, filterValue, limit)
+	docs, err := h.docService.GetDocuments(c.Request.Context(), targetID, filterKey, filterValue, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Response{
 			Error: &Error{Code: 500, Text: err.Error()},
@@ -151,10 +151,11 @@ func (h *DocumentHandler) GetDocumentsHead(c *gin.Context) {
 // @Failure 500 {object} Response
 // @Router /docs/{id} [get]
 func (h *DocumentHandler) GetDocument(c *gin.Context) {
+	userID := c.MustGet("user_id").(string)
 	login := c.MustGet("login").(string)
 	id := c.Param("id")
 
-	doc, err := h.docService.GetDocument(c.Request.Context(), id, login)
+	doc, err := h.docService.GetDocument(c.Request.Context(), id, userID, login)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if err.Error() == "access denied" {

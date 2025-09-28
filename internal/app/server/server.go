@@ -46,7 +46,7 @@ func New(cfg *config.Config) *Server {
 	cacheRepo := redis.NewCacheRepository(rdb)
 
 	authService := service.NewAuthService(userRepo, cacheRepo, jwtManager, cfg.AdminToken)
-	docService := service.NewDocumentService(docRepo, cacheRepo, userRepo)
+	docService := service.NewDocumentService(docRepo, cacheRepo)
 
 	authHandler := handlers.NewAuthHandler(authService)
 	docHandler := handlers.NewDocumentHandler(docService)

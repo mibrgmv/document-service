@@ -13,7 +13,8 @@ type Manager struct {
 }
 
 type Claims struct {
-	Login string `json:"login"`
+	UserID string `json:"user_id"`
+	Login  string `json:"login"`
 	jwt.StandardClaims
 }
 
@@ -24,9 +25,10 @@ func NewManager(secret string, expiration time.Duration) *Manager {
 	}
 }
 
-func (m *Manager) GenerateToken(login string) (string, error) {
+func (m *Manager) GenerateToken(userID, login string) (string, error) {
 	claims := Claims{
-		Login: login,
+		UserID: userID,
+		Login:  login,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(m.expiration).Unix(),
 			IssuedAt:  time.Now().Unix(),
