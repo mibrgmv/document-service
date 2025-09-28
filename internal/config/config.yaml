@@ -1,13 +1,9 @@
 server:
-  port: "8080"
   read_timeout: 15s
   write_timeout: 15s
   idle_timeout: 60s
 
 postgres:
-  host: "localhost"
-  port: "5432"
-  dbname: "documents"
   sslmode: "disable"
 
 redis:

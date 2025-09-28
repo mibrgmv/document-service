@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   document-service:
     container_name: document-service
@@ -15,7 +13,7 @@ services:
       - POSTGRES_DB=documents
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=your-secret-key
+      - JWT_SECRET=secret-key
       - ADMIN_TOKEN=admin-token
     depends_on:
       - postgres

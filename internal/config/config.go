@@ -63,9 +63,14 @@ func Load() (*Config, error) {
 
 	_ = godotenv.Load()
 
+	cfg.Server.Port, err = getEnv("SERVER_PORT")
+	cfg.Postgres.Host, err = getEnv("POSTGRES_HOST")
+	cfg.Postgres.Port, err = getEnv("POSTGRES_PORT")
 	cfg.Postgres.User, err = getEnv("POSTGRES_USER")
 	cfg.Postgres.Password, err = getEnv("POSTGRES_PASSWORD")
-	cfg.Redis.Password, err = getEnv("REDIS_PASSWORD")
+	cfg.Postgres.DBName, err = getEnv("POSTGRES_DB")
+	cfg.Redis.Host, err = getEnv("REDIS_HOST")
+	cfg.Redis.Port, err = getEnv("REDIS_PORT")
 	cfg.JWT.Secret, err = getEnv("JWT_SECRET")
 	cfg.AdminToken, err = getEnv("ADMIN_TOKEN")
 
