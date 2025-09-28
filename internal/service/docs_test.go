@@ -197,9 +197,9 @@ func TestDocumentService_GetDocument_Success_FromCache(t *testing.T) {
 		Data:    []byte("content"),
 	}
 
-	mockCacheRepo.On("GetDocument", mock.Anything, "doc:123:testuser").Return(expectedDoc, nil)
+	mockCacheRepo.On("GetDocument", mock.Anything, "doc:123:user123").Return(expectedDoc, nil)
 
-	doc, err := docService.GetDocument(context.Background(), "123", "testuser")
+	doc, err := docService.GetDocument(context.Background(), "123", "user123", "testuser")
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedDoc, doc)
@@ -224,11 +224,11 @@ func TestDocumentService_GetDocument_Success_FromDatabase(t *testing.T) {
 		Data:    []byte("content"),
 	}
 
-	mockCacheRepo.On("GetDocument", mock.Anything, "doc:123:testuser").Return(nil, errors.New("cache miss"))
+	mockCacheRepo.On("GetDocument", mock.Anything, "doc:123:user123").Return(nil, errors.New("cache miss"))
 	mockDocRepo.On("GetDocumentByID", mock.Anything, "123").Return(expectedDoc, nil)
-	mockCacheRepo.On("SetDocument", mock.Anything, "doc:123:testuser", expectedDoc, 10*time.Minute).Return(nil)
+	mockCacheRepo.On("SetDocument", mock.Anything, "doc:123:user123", expectedDoc, 10*time.Minute).Return(nil)
 
-	doc, err := docService.GetDocument(context.Background(), "123", "testuser")
+	doc, err := docService.GetDocument(context.Background(), "123", "user123", "testuser")
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedDoc, doc)
@@ -253,10 +253,10 @@ func TestDocumentService_GetDocument_AccessDenied(t *testing.T) {
 		Data:    []byte("content"),
 	}
 
-	mockCacheRepo.On("GetDocument", mock.Anything, "doc:123:testuser").Return(nil, errors.New("cache miss"))
+	mockCacheRepo.On("GetDocument", mock.Anything, "doc:123:user123").Return(nil, errors.New("cache miss"))
 	mockDocRepo.On("GetDocumentByID", mock.Anything, "123").Return(docFromDB, nil)
 
-	doc, err := docService.GetDocument(context.Background(), "123", "testuser")
+	doc, err := docService.GetDocument(context.Background(), "123", "user123", "testuser")
 
 	assert.Error(t, err)
 	assert.Nil(t, doc)
@@ -265,7 +265,7 @@ func TestDocumentService_GetDocument_AccessDenied(t *testing.T) {
 	mockCacheRepo.AssertNotCalled(t, "SetDocument")
 }
 
-func TestDocumentService_GetDocument_AccessGranted(t *testing.T) {
+func TestDocumentService_GetDocument_AccessGranted_ByGrant(t *testing.T) {
 	mockDocRepo := new(mocks.MockDocumentRepository)
 	mockCacheRepo := new(mocks.MockCacheRepository)
 	docService := service.NewDocumentService(mockDocRepo, mockCacheRepo)
@@ -282,11 +282,40 @@ func TestDocumentService_GetDocument_AccessGranted(t *testing.T) {
 		Data:    []byte("content"),
 	}
 
-	mockCacheRepo.On("GetDocument", mock.Anything, "doc:123:testuser").Return(nil, errors.New("cache miss"))
+	mockCacheRepo.On("GetDocument", mock.Anything, "doc:123:user123").Return(nil, errors.New("cache miss"))
 	mockDocRepo.On("GetDocumentByID", mock.Anything, "123").Return(docFromDB, nil)
-	mockCacheRepo.On("SetDocument", mock.Anything, "doc:123:testuser", docFromDB, 10*time.Minute).Return(nil)
+	mockCacheRepo.On("SetDocument", mock.Anything, "doc:123:user123", docFromDB, 10*time.Minute).Return(nil)
 
-	doc, err := docService.GetDocument(context.Background(), "123", "testuser")
+	doc, err := docService.GetDocument(context.Background(), "123", "user123", "testuser")
+
+	assert.NoError(t, err)
+	assert.Equal(t, docFromDB, doc)
+	mockDocRepo.AssertExpectations(t)
+	mockCacheRepo.AssertExpectations(t)
+}
+
+func TestDocumentService_GetDocument_AccessGranted_ByOwner(t *testing.T) {
+	mockDocRepo := new(mocks.MockDocumentRepository)
+	mockCacheRepo := new(mocks.MockCacheRepository)
+	docService := service.NewDocumentService(mockDocRepo, mockCacheRepo)
+
+	docFromDB := &domain.Document{
+		ID:      "123",
+		Name:    "myfile.txt",
+		Mime:    "text/plain",
+		File:    true,
+		Public:  false,
+		Created: time.Now(),
+		Grant:   []string{},
+		Owner:   "user123",
+		Data:    []byte("content"),
+	}
+
+	mockCacheRepo.On("GetDocument", mock.Anything, "doc:123:user123").Return(nil, errors.New("cache miss"))
+	mockDocRepo.On("GetDocumentByID", mock.Anything, "123").Return(docFromDB, nil)
+	mockCacheRepo.On("SetDocument", mock.Anything, "doc:123:user123", docFromDB, 10*time.Minute).Return(nil)
+
+	doc, err := docService.GetDocument(context.Background(), "123", "user123", "testuser")
 
 	assert.NoError(t, err)
 	assert.Equal(t, docFromDB, doc)
