@@ -1,6 +1,20 @@
 ## Инструменты
 Go 1.24, Gin, PostgreSQL, pgx, Redis, JWT, golang-migrate, Swagger, testify, mock
 
+### Что есть хорошего 
+- Генерация swagger документации
+- Кэш в Redis с инвалидацией
+- JWT авторизация
+- Контейнеризация в docker  
+- Юнит тесты для слоя сервисов
+- Конфигурация из `yaml` и `env` файлов
+
+### Что можно добавить
+- Метрики и логирование
+- Разделить сервис авторизации и сервис документов на разные микросервисы
+- Авторизация через identity provider (например Keycloak)
+- Пагинация для `GET /api/docs`
+
 ## Инструкция для запуска
 - склонировать репозиторий
 - локально
@@ -10,7 +24,8 @@ Go 1.24, Gin, PostgreSQL, pgx, Redis, JWT, golang-migrate, Swagger, testify, moc
   - запустить `go run cmd/app/main.go`
 - через Docker
   - `docker compose up -d`
-- наслаждаться по `http://localhost:8080`, swagger дока по `http://localhost:8080/swagger`
+- наслаждаться на порту `http://localhost:8080`, swagger на `http://localhost:8080/swagger`
+- **note:** миграции поднимутся автоматически
 
 ### Пример `.env`
 ```dotenv
