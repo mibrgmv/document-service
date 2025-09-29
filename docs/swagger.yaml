@@ -1,0 +1,295 @@
+basePath: /api
+definitions:
+  handlers.AuthRequest:
+    properties:
+      login:
+        type: string
+      pswd:
+        type: string
+    type: object
+  handlers.RegisterRequest:
+    properties:
+      login:
+        type: string
+      pswd:
+        type: string
+      token:
+        type: string
+    type: object
+  handlers.Response:
+    properties:
+      data: {}
+      error: {}
+      response: {}
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for document management service
+  termsOfService: http://swagger.io/terms/
+  title: Document Server API
+  version: "1.0"
+paths:
+  /auth:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and get JWT token
+      parameters:
+      - description: Auth credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: User authentication
+      tags:
+      - auth
+  /auth/{token}:
+    delete:
+      description: Logout user and invalidate token
+      parameters:
+      - description: JWT Token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: User logout
+      tags:
+      - auth
+  /docs:
+    get:
+      description: Get list of documents with optional filtering
+      parameters:
+      - description: 'User login to filter (default: current user)'
+        in: query
+        name: login
+        type: string
+      - description: Filter key (name, mime, public)
+        in: query
+        name: key
+        type: string
+      - description: Filter value
+        in: query
+        name: value
+        type: string
+      - description: Limit number of documents
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      security:
+      - BearerAuth: []
+      summary: Get documents list
+      tags:
+      - documents
+    head:
+      description: HEAD request for documents list
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: HEAD documents list
+      tags:
+      - documents
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a new document (file or JSON)
+      parameters:
+      - description: Document metadata JSON
+        in: formData
+        name: meta
+        required: true
+        type: string
+      - description: Document file
+        in: formData
+        name: file
+        type: file
+      - description: JSON data (if not file)
+        in: formData
+        name: json
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      security:
+      - BearerAuth: []
+      summary: Upload document
+      tags:
+      - documents
+  /docs/{id}:
+    delete:
+      description: Delete document by ID
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete document
+      tags:
+      - documents
+    get:
+      description: Get document by ID. Returns file or JSON based on document type
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      security:
+      - BearerAuth: []
+      summary: Get document
+      tags:
+      - documents
+    head:
+      description: HEAD request for document
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: HEAD document
+      tags:
+      - documents
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user (requires admin token)
+      parameters:
+      - description: Registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: Register new user
+      tags:
+      - auth
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
