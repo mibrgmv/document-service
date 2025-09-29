@@ -1,7 +1,7 @@
-### Что используется
+## Инструменты
 Go 1.24, Gin, PostgreSQL, pgx, Redis, JWT, golang-migrate, Swagger, testify, mock
 
-### Инструкция для запуска
+## Инструкция для запуска
 - склонировать репозиторий
 - локально
   - создать `.env` и заполнить его значениями 
@@ -26,7 +26,16 @@ JWT_SECRET=56dhu8ytvf
 ADMIN_TOKEN=f86jno7rcbu
 ```
 
-### Шаги для тестирования (Swagger)
+## Описание API
+- `POST /api/register` - регистрация нового пользователя
+- `POST /api/auth` - аутентификация, получение JWT токена
+- `DELETE /api/auth/{token}` - завершение сессии
+- `GET /api/docs` - список документов с фильтрацией
+- `POST /api/docs` - загрузка нового документа
+- `GET /api/docs/{id}` - получение документа по ID
+- `DELETE /api/docs/{id}` - удаление документа
+
+## Тестирование через Swagger
 1. Регистрация
 ```
 POST /api/register
@@ -62,15 +71,3 @@ POST /api/auth
 6. Получение документа по ID
 - `GET /api/docs/{id}`
 - Authorization: `Bearer TOKEN`
-
-## API Endpoints
-### Аутентификация
-- `POST /api/register` - регистрация нового пользователя
-- `POST /api/auth` - аутентификация, получение JWT токена
-- `DELETE /api/auth/{token}` - завершение сессии
-
-### Документы
-- `GET /api/docs` - список документов с фильтрацией
-- `POST /api/docs` - загрузка нового документа
-- `GET /api/docs/{id}` - получение документа по ID
-- `DELETE /api/docs/{id}` - удаление документа
